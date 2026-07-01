@@ -11,6 +11,7 @@ import {
 
 import { analyzeImage } from '../lib/gemini';
 import { PROMPT_LABELS, PROMPTS } from '../lib/prompts';
+import { supabase, supabaseConfigured } from '../lib/supabase';
 
 export default function ResultScreen({ navigation, route }) {
   const { photoUri, base64Image, promptKey = 'academic' } = route.params;
@@ -29,6 +30,7 @@ export default function ResultScreen({ navigation, route }) {
         if (isMounted) {
           setResult(analysis);
         }
+        saveToHistory(analysis, promptLabel);
       } catch (err) {
         if (isMounted) {
           setError(err.message || 'Unable to analyze the image.');
@@ -47,6 +49,20 @@ export default function ResultScreen({ navigation, route }) {
     };
   }, [base64Image, prompt]);
 
+  async function saveToHistory(analysis, label) {
+    if (!supabaseConfigured) return;
+
+    try {
+      await supabase.from('analysis_history').insert({
+        objects: analysis.objects.join(', '),
+        context: analysis.context,
+        recommendations: `[${label}] ${analysis.recommendations}`,
+      });
+    } catch (err) {
+      console.warn('Failed to save history:', err);
+    }
+  }
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Image source={{ uri: photoUri }} style={styles.thumbnail} />
@@ -63,6 +79,12 @@ export default function ResultScreen({ navigation, route }) {
         <View style={styles.centerBlock}>
           <Text style={styles.errorTitle}>Analysis failed</Text>
           <Text style={styles.errorText}>{error}</Text>
+          {error.includes('Gemini API key') ? (
+            <Text style={styles.helpText}>
+              Open .env, replace your_key_here with your real Google AI Studio
+              key, then restart Expo with npx expo start -c.
+            </Text>
+          ) : null}
           <TouchableOpacity
             style={styles.button}
             onPress={() => navigation.goBack()}
@@ -141,6 +163,11 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#333',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  helpText: {
+    color: '#555',
     marginBottom: 16,
     textAlign: 'center',
   },

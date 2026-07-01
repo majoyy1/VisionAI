@@ -1,10 +1,12 @@
 import { useRef } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function CameraScreen({ navigation }) {
   const cameraRef = useRef(null);
   const [permission, requestPermission] = useCameraPermissions();
+  const insets = useSafeAreaInsets();
 
   async function takePicture() {
     if (!cameraRef.current) return;
@@ -28,7 +30,9 @@ export default function CameraScreen({ navigation }) {
     return (
       <View style={styles.permissionContainer}>
         <Text style={styles.permissionText}>
-          We need your permission to use the camera
+          {Platform.OS === 'ios'
+            ? 'VisionAI needs camera access. Tap below, then choose "Allow" in the dialog.'
+            : 'VisionAI needs camera access. Tap below to grant the permission.'}
         </Text>
         <TouchableOpacity
           style={styles.permissionButton}
@@ -43,7 +47,16 @@ export default function CameraScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <CameraView ref={cameraRef} style={styles.camera} facing="back" />
-      <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
+      <TouchableOpacity
+        style={[styles.historyButton, { top: insets.top + 16 }]}
+        onPress={() => navigation.navigate('History')}
+      >
+        <Text style={styles.historyButtonText}>History</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.captureButton, { bottom: insets.bottom + 24 }]}
+        onPress={takePicture}
+      >
         <Text style={styles.captureButtonText}>Capture</Text>
       </TouchableOpacity>
     </View>
@@ -60,7 +73,6 @@ const styles = StyleSheet.create({
   },
   captureButton: {
     position: 'absolute',
-    bottom: 40,
     alignSelf: 'center',
     backgroundColor: '#2E5BBA',
     paddingVertical: 14,
@@ -70,6 +82,18 @@ const styles = StyleSheet.create({
   captureButtonText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  historyButton: {
+    position: 'absolute',
+    right: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+  },
+  historyButtonText: {
+    color: '#fff',
     fontWeight: 'bold',
   },
   permissionContainer: {

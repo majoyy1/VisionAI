@@ -1,9 +1,18 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 
 import { PROMPT_LABELS } from '../lib/prompts';
 
 export default function PreviewScreen({ navigation, route }) {
   const { photoUri, base64Image } = route.params;
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 768;
 
   function goAnalyze(promptKey) {
     navigation.navigate('Result', { photoUri, base64Image, promptKey });
@@ -11,7 +20,10 @@ export default function PreviewScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <Image source={{ uri: photoUri }} style={styles.preview} />
+      <Image
+        source={{ uri: photoUri }}
+        style={[styles.preview, { maxWidth: isTablet ? 640 : '100%' }]}
+      />
       <View style={styles.personaPanel}>
         <Text style={styles.personaTitle}>Choose an analysis style</Text>
         {Object.entries(PROMPT_LABELS).map(([key, label]) => (
@@ -43,6 +55,8 @@ const styles = StyleSheet.create({
   },
   preview: {
     flex: 1,
+    alignSelf: 'center',
+    width: '100%',
     resizeMode: 'contain',
   },
   actions: {
