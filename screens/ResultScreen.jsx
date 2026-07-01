@@ -10,17 +10,12 @@ import {
 } from 'react-native';
 
 import { analyzeImage } from '../lib/gemini';
-
-const ANALYSIS_PROMPT = `Analyze this image and return only valid JSON with this exact shape:
-{
-  "objects": ["object 1", "object 2"],
-  "context": "One short paragraph describing the scene.",
-  "activity": "What appears to be happening in the image.",
-  "recommendations": "Practical recommendations based on what you see."
-}`;
+import { PROMPT_LABELS, PROMPTS } from '../lib/prompts';
 
 export default function ResultScreen({ navigation, route }) {
-  const { photoUri, base64Image } = route.params;
+  const { photoUri, base64Image, promptKey = 'academic' } = route.params;
+  const prompt = PROMPTS[promptKey] || PROMPTS.academic;
+  const promptLabel = PROMPT_LABELS[promptKey] || PROMPT_LABELS.academic;
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -30,7 +25,7 @@ export default function ResultScreen({ navigation, route }) {
 
     async function runAnalysis() {
       try {
-        const analysis = await analyzeImage(base64Image, ANALYSIS_PROMPT);
+        const analysis = await analyzeImage(base64Image, prompt);
         if (isMounted) {
           setResult(analysis);
         }
@@ -50,11 +45,12 @@ export default function ResultScreen({ navigation, route }) {
     return () => {
       isMounted = false;
     };
-  }, [base64Image]);
+  }, [base64Image, prompt]);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Image source={{ uri: photoUri }} style={styles.thumbnail} />
+      <Text style={styles.personaTitle}>{promptLabel}</Text>
 
       {loading ? (
         <View style={styles.centerBlock}>
@@ -79,7 +75,7 @@ export default function ResultScreen({ navigation, route }) {
       {!loading && result ? (
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Objects</Text>
-          {(result.objects || []).map((item, index) => (
+          {result.objects.map((item, index) => (
             <Text key={`${item}-${index}`} style={styles.objectItem}>
               - {item}
             </Text>
@@ -93,6 +89,13 @@ export default function ResultScreen({ navigation, route }) {
 
           <Text style={styles.sectionTitle}>Recommendations</Text>
           <Text style={styles.bodyText}>{result.recommendations}</Text>
+
+          <TouchableOpacity
+            style={styles.compareButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.compareButtonText}>Try Another Persona</Text>
+          </TouchableOpacity>
         </View>
       ) : null}
     </ScrollView>
@@ -112,6 +115,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     borderRadius: 8,
     marginBottom: 16,
+  },
+  personaTitle: {
+    color: '#2E5BBA',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
   },
   centerBlock: {
     alignItems: 'center',
@@ -165,5 +175,16 @@ const styles = StyleSheet.create({
     color: '#222',
     fontSize: 15,
     lineHeight: 22,
+  },
+  compareButton: {
+    alignItems: 'center',
+    backgroundColor: '#2E5BBA',
+    borderRadius: 8,
+    marginTop: 20,
+    paddingVertical: 12,
+  },
+  compareButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });

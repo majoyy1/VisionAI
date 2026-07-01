@@ -1,24 +1,35 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+import { PROMPT_LABELS } from '../lib/prompts';
+
 export default function PreviewScreen({ navigation, route }) {
   const { photoUri, base64Image } = route.params;
 
-  function analyzePhoto() {
-    navigation.navigate('Result', { photoUri, base64Image });
+  function goAnalyze(promptKey) {
+    navigation.navigate('Result', { photoUri, base64Image, promptKey });
   }
 
   return (
     <View style={styles.container}>
       <Image source={{ uri: photoUri }} style={styles.preview} />
+      <View style={styles.personaPanel}>
+        <Text style={styles.personaTitle}>Choose an analysis style</Text>
+        {Object.entries(PROMPT_LABELS).map(([key, label]) => (
+          <TouchableOpacity
+            key={key}
+            style={styles.personaButton}
+            onPress={() => goAnalyze(key)}
+          >
+            <Text style={styles.personaLabel}>{label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
       <View style={styles.actions}>
         <TouchableOpacity
           style={[styles.button, styles.secondaryButton]}
           onPress={() => navigation.goBack()}
         >
           <Text style={styles.secondaryButtonText}>Retake</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={analyzePhoto}>
-          <Text style={styles.buttonText}>Analyze</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -35,22 +46,38 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   actions: {
-    flexDirection: 'row',
-    gap: 12,
     padding: 20,
     backgroundColor: '#000',
   },
+  personaPanel: {
+    gap: 10,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    backgroundColor: '#000',
+  },
+  personaTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 2,
+    textAlign: 'center',
+  },
+  personaButton: {
+    alignItems: 'center',
+    backgroundColor: '#2E5BBA',
+    borderRadius: 10,
+    paddingVertical: 13,
+  },
+  personaLabel: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
   button: {
-    flex: 1,
     alignItems: 'center',
     backgroundColor: '#2E5BBA',
     borderRadius: 10,
     paddingVertical: 14,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   secondaryButton: {
     backgroundColor: '#fff',
